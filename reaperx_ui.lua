@@ -1,3 +1,4 @@
+-- Update 0.1
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -637,10 +638,22 @@ index3.DeleteConfig = function(arg, arg2)
 end
 
 index3.RefreshConfigsList = function(arg, arg2)
+	if not listfiles or not isfolder or not isfolder(index3.Folders.Configs) then
+		if arg2 and arg2.Refresh then
+			pcall(function()
+				arg2:Refresh({})
+			end)
+		end
+		return
+	end
 	local t18 = {}
 	local t19 = {}
 	local v78 = string.gsub(index3.Folders.Configs, index3.Folders.Directory .. "/", "")
-	for k_, config in listfiles(index3.Folders.Configs) do
+	local ok, files = pcall(listfiles, index3.Folders.Configs)
+	if not ok or type(files) ~= "table" then
+		return
+	end
+	for k_, config in files do
 		t19[k_] = string.gsub(config, index3.Folders.Directory .. "\\" .. v78 .. "\\", "")
 	end
 	if not (#t19 ~= t18) then
