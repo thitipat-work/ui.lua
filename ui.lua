@@ -7004,24 +7004,34 @@ end
 index3.CreateSettingsPage = function(arg, arg2)
 	local v78 = arg2:Page({ Name = "Settings", Icon = "122669828593160" })
 	local v79 = v78:Section({
-		Name = "Configs", Side = 1, Icon = "10723433935", Description = "Configuration management system.",
+		Name = "Configuration",
+		Side = 1,
+		Icon = "10723433935",
+		Description = "Save, load, and manage config files.",
 	})
 	local v80 = nil
 	local v81 = nil
 	local v82 = v79:Listbox({
-		Flag = "ConfigsList", Items = {}, Multi = false,
+		Flag = "ConfigsList",
+		Name = "Saved configs",
+		Items = {},
+		Multi = false,
 		Callback = function(arg3)
 			v81 = arg3
 		end,
 	})
 	v79:Textbox({
-		Flag = "ConfigsName", Placeholder = "Input Name.", Numeric = false, Finished = true,
+		Flag = "ConfigsName",
+		Name = "Config name",
+		Placeholder = "Enter config name",
+		Numeric = false,
+		Finished = true,
 		Callback = function(arg3)
 			v80 = arg3
 		end,
 	})
 	v79:Button({
-		Name = "Create",
+		Name = "Create config",
 		Callback = function()
 			if v80 and v80 ~= "" then
 				if not isfile(index3.Folders.Configs .. "/" .. v80 .. ".json") then
@@ -7032,7 +7042,7 @@ index3.CreateSettingsPage = function(arg, arg2)
 		end,
 	})
 	v79:Button({
-		Name = "Delete",
+		Name = "Delete config",
 		Callback = function()
 			if v81 then
 				index3:DeleteConfig(v81)
@@ -7041,7 +7051,7 @@ index3.CreateSettingsPage = function(arg, arg2)
 		end,
 	})
 	v79:Button({
-		Name = "Load",
+		Name = "Load config",
 		Callback = function()
 			if v81 then
 				index3:LoadConfig(readfile(index3.Folders.Configs .. "/" .. v81), v81)
@@ -7049,7 +7059,7 @@ index3.CreateSettingsPage = function(arg, arg2)
 		end,
 	})
 	v79:Button({
-		Name = "Save",
+		Name = "Save config",
 		Callback = function()
 			if v81 then
 				writefile(index3.Folders.Configs .. "/" .. v81, index3:GetConfig(v81))
@@ -7057,7 +7067,7 @@ index3.CreateSettingsPage = function(arg, arg2)
 		end,
 	})
 	v79:Button({
-		Name = "Refresh",
+		Name = "Refresh list",
 		Callback = function()
 			index3:RefreshConfigsList(v82)
 		end,
@@ -7066,8 +7076,12 @@ index3.CreateSettingsPage = function(arg, arg2)
 	return v78
 end
 
-if not isfile(index3.Folders.Configs .. "/" .. configFileName) then
-	writefile(index3.Folders.Configs .. "/" .. configFileName, index3:GetConfig())
+if not (isfile and writefile) or not isfile(index3.Folders.Configs .. "/" .. configFileName) then
+	if writefile then
+		pcall(function()
+			writefile(index3.Folders.Configs .. "/" .. configFileName, index3:GetConfig())
+		end)
+	end
 end
 
 return index3
