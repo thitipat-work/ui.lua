@@ -1,4 +1,4 @@
--- Update 0.1
+-- update 0.2
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -26,6 +26,8 @@ local index3 = {
 	Folders = {
 		Directory = "AnimeMysteriousScript", Configs = "AnimeMysteriousScript/Configs",
 	},
+	SuppressConfigCallbacks = false,
+	MainConfigName = nil,
 	Pages = {}, Sections = {}, Connections = {}, Threads = {}, ThemeMap = {}, ThemeItems = {}, OpenFrames = {}, SetFlags = {},
 	UnnamedConnections = 0, UnnamedFlags = 0, Holder = nil, NotifHolder = nil, UnusedHolder = nil, Font = nil,
 }
@@ -594,7 +596,11 @@ end
 local t18 = { "Default", "Auto Load", "Macro Record", "Select Load Config", "Settings Auto Load" }
 
 index3.LoadConfig = function(arg, arg2, currentConfig)
-	local data2 = HttpService:JSONDecode(arg2)
+	local data2 = type(arg2) == "string" and HttpService:JSONDecode(arg2) or arg2
+	if type(data2) ~= "table" then
+		return false, "invalid config"
+	end
+	arg.SuppressConfigCallbacks = true
 	local v78, v79 = index3:SafeCall(function()
 		for k_, v80 in data2 do
 			if not table.find(t18, tostring(k_)) then
@@ -611,23 +617,38 @@ index3.LoadConfig = function(arg, arg2, currentConfig)
 			end
 		end
 	end)
+	arg.SuppressConfigCallbacks = false
 	index3.CurrentConfig = currentConfig
 	return v78, v79
 end
 
+index3.ApplyConfigTable = function(arg, data2, currentConfig)
+	if type(data2) ~= "table" then
+		return false
+	end
+	return arg:LoadConfig(data2, currentConfig or configFileName)
+end
+
 index3.AutoSave = function()
 	pcall(function()
-		if not index3.Loading then
+		if index3.Loading then
 			return
 		end
-		if index3.CurrentConfig ~= configFileName then
+		if index3.CurrentConfig ~= (index3.MainConfigName or configFileName) then
 			return
 		end
-		if isfile(index3.Folders.Configs .. "/" .. configFileName) then
-			if index3.CurrentConfig == configFileName then
-				writefile(index3.Folders.Configs .. "/" .. configFileName, index3:GetConfig(configFileName))
+		if not writefile then
+			return
+		end
+		if makefolder then
+			if not isfolder(index3.Folders.Directory) then
+				makefolder(index3.Folders.Directory)
+			end
+			if not isfolder(index3.Folders.Configs) then
+				makefolder(index3.Folders.Configs)
 			end
 		end
+		writefile(index3.Folders.Configs .. "/" .. configFileName, index3:GetConfig(configFileName))
 	end)
 end
 
@@ -3067,7 +3088,7 @@ index3.Sections.Toggle = function(arg, arg2)
 			t20.AccentBarGradient.Instance.Enabled = false
 			t20.Text:Tween(nil, { TextTransparency = 0.3 })
 		end
-		if t19.Callback then
+		if t19.Callback and not index3.SuppressConfigCallbacks then
 			index3:SafeCall(t19.Callback, t19.Value)
 		end
 	end
@@ -3270,9 +3291,7 @@ index3.Sections.Toggle = function(arg, arg2)
 	end)
 	t19:Set(t19.Default)
 	index3.SetFlags[t19.Flag] = function(arg3)
-		task.delay(0.25, function()
-			t19:Set(arg3)
-		end)
+		t19:Set(arg3)
 	end
 	t19.Section.Elements[#t19.Section.Elements + 1] = t19
 	return t19
@@ -7158,14 +7177,6 @@ index3.CreateSettingsPage = function(arg, arg2)
 	})
 
 	return v78
-end
-
-if not (isfile and writefile) or not isfile(index3.Folders.Configs .. "/" .. configFileName) then
-	if writefile then
-		pcall(function()
-			writefile(index3.Folders.Configs .. "/" .. configFileName, index3:GetConfig())
-		end)
-	end
 end
 
 return index3
